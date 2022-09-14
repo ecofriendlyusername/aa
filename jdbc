@@ -1,0 +1,165 @@
+package dd;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class DMLTest {
+	public DMLTest() {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			System.out.println("드라이버 로딩 성공!!");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		DMLTest dmlTest = new DMLTest();
+		// dmlTest.insertProduct("az", "ee", 1500000, "asdf");
+		dmlTest.searchAll();
+	}
+	
+	private void deleteProduct(String productId) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		try {
+			// 2. DB연결
+			conn = getConnection();
+			
+			// 3-1. SQL(매개 변수로 넘겨줄 String 형태로 sql문 작성)
+			String sql = "delete from product where product_id = ?";
+			
+			// 3-2 SQL문 실행을 위한 preparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			// 값 세팅하기.
+			pstmt.setString(1,productId);
+			
+			// 4. SQL문 실행 --> preparestatement 실행.
+			int cnt = pstmt.executeUpdate();
+			System.out.println(cnt + " 개 삭제 성공!");
+			
+			// 5. DB 연결 종료
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			// 5. DB 연결 종료
+			// 방법1. 하나씩 모두 끊기
+			close(conn,pstmt);
+		}
+	}
+	
+	private void searchAll() {
+		/*
+		 * Try-with-resource : try() 문에서 선언된 객체들에 대해 try가 종료될 때 
+		 * 자동으로 자원을 삭제해주는 기능
+		 * try 구문이 종료될 때 객체의 close() 메소드를 호출
+		 */
+		try(Connection conn = getConnection();) {
+			String sql = "select product_id, product_name, product_price, product_desc from product";
+			// 3-2 SQL문 실행을 위한 preparedStatement 객체 생성
+			try (PreparedStatement pstmt = conn.prepareStatement(sql);) {
+				// 4. SQL문 실행 --> preparestatement 실행.
+				ResultSet rs = pstmt.executeQuery();
+				// next() --> 가져온 테이블에 처음부터 끝까지 확인할 수 있음 first() 기능 포함
+				while (rs.next()) {
+					String pid = rs.getString("product_id");
+					String pname = rs.getString("product_name");
+					int price = rs.getInt("product_price");
+					String pdesc = rs.getString("product_desc");
+					System.out.println(pid + " " + pname + " " + price + " " + pdesc);
+				}
+			} catch (Exception e) {
+				
+			}
+		} catch (Exception e){
+			
+		}
+	}
+	
+	private void updateProduct(String productId, int productPrice) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		try {
+			// 2. DB연결
+			conn = getConnection();
+			
+			// 3-1. SQL(매개 변수로 넘겨줄 String 형태로 sql문 작성)
+			String sql = "update product set product_price = ? where product_id = ?";
+			
+			// 3-2 SQL문 실행을 위한 preparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			// 값 세팅하기.
+			pstmt.setInt(1,productPrice);
+			pstmt.setString(2,productId);
+			// 4. SQL문 실행 --> preparestatement 실행.
+			int cnt = pstmt.executeUpdate();
+			System.out.println(cnt + " 업데이트 성공!");
+			// 5. DB 연결 종료
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			// 5. DB 연결 종료
+			// 방법1. 하나씩 모두 끊기
+			close(conn,pstmt);
+		}
+	}
+	
+	private void insertProduct(String productId, String productName, int productPrice, String productDesc) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		try {
+			// 2. DB연결
+			conn = getConnection();
+			
+			// 3-1. SQL(매개 변수로 넘겨줄 String 형태로 sql문 작성)
+			String sql = "insert into product (product_id, product_name, product_price, product_desc) \n ";
+			sql += "values(?,?,?,?)";
+			
+			// 3-2 SQL문 실행을 위한 preparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			// 값 세팅하기.
+			pstmt.setString(1,productId);
+			pstmt.setString(2,productName);
+			pstmt.setInt(3,productPrice);
+			pstmt.setString(4,productDesc);
+			
+			// 4. SQL문 실행 --> preparestatement 실행.
+			int cnt = pstmt.executeUpdate();
+			System.out.println(cnt + " 개 삽입 성공!");
+			
+			// 5. DB 연결 종료
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			close(conn,pstmt);
+		}
+	}
+	
+	private Connection getConnection() throws SQLException {
+		return DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/scott?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8","ssafy","ssafy");
+	}
+	
+	private void close(Connection conn, PreparedStatement pstmt) {
+		try {
+			if (pstmt != null) {
+				pstmt.close();
+			}
+			if (conn != null) {
+				conn.close();
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}
